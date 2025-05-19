@@ -1,0 +1,28 @@
+server:
+  port: 8081
+
+spring:
+  datasource:
+    url: jdbc:mysql://${DB_HOST:localhost}:3306/paymentdb
+    username: root
+    password: rootroot
+    driverClassName: com.mysql.cj.jdbc.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.MySQL8Dialect
+    hibernate:
+      ddl-auto: update
+  application:
+    name: PAYMENT-SERVICE
+  cloud:
+    config:
+      fail-fast: false
+      enabled: false
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://dev-0nrrcude14pccq4i.us.auth0.com/
+
+eureka:
+  client:
+    enabled: false
