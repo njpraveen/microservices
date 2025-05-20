@@ -13,16 +13,10 @@ spring:
       ddl-auto: update
   application:
     name: PAYMENT-SERVICE
-  cloud:
-    config:
-      fail-fast: false
-      enabled: false
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: https://dev-0nrrcude14pccq4i.us.auth0.com/
 
 eureka:
   client:
-    enabled: false
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true

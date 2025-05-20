@@ -36,6 +36,11 @@ out/
 ### VS Code ###
 .vscode/
 
+### Application Specific ###
+application-local.properties
+application-dev.properties
+*.log
+
 ### Application Properties ###
 src/main/resources/application-*.yml
 !src/main/resources/application.yml
