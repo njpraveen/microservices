@@ -15,6 +15,14 @@ public class PaymentController {
     @Autowired
     private PaymentService paymentService;
 
+    @GetMapping("/test/{orderId}")
+    public ResponseEntity<String> sampleTest(@PathVariable String orderId) {
+        return new ResponseEntity<>(
+                "Sample Test for Order ID: " + orderId,
+                HttpStatus.OK
+        );
+    }
+
     @PostMapping
     public ResponseEntity<Long> doPayment(@RequestBody PaymentRequest paymentRequest) {
         return new ResponseEntity<>(
