@@ -5,7 +5,7 @@ class Player(val name: String, val isComputer: Boolean, var hand: Int)
 /**
  * The rules from the box:
  *  1. The magnets are divided evenly among the players.
- *  2. Players take turns placing one magnet inside the rope. If two or more magnets snap together,
+ *  2. Players take turns placing one magnet inside the ring. If two or more magnets snap together,
  *     the player who just placed takes all the snapped magnets back into their hand.
  *  3. The first player to place their last magnet without causing a snap wins.
  */

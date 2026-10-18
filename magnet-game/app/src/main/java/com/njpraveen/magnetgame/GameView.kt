@@ -1,9 +1,9 @@
 package com.njpraveen.magnetgame
 
 import android.content.Context
+import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
-import android.graphics.DashPathEffect
 import android.graphics.Paint
 import android.graphics.RadialGradient
 import android.graphics.RectF
@@ -19,7 +19,7 @@ import kotlin.math.min
 import kotlin.math.sin
 import kotlin.random.Random
 
-/** Draws the table, rope and magnets, and runs the turn loop. */
+/** Draws the table, flower ring and magnets, and runs the turn loop. */
 class GameView(
     context: Context,
     private val playerNames: List<String>,
@@ -68,18 +68,15 @@ class GameView(
         null
     }
 
-    private val tablePaint = Paint()
-    private val ropePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        style = Paint.Style.STROKE; color = Color.rgb(255, 235, 59); strokeCap = Paint.Cap.ROUND
-    }
-    private val ropeTwistPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        style = Paint.Style.STROKE; color = Color.rgb(205, 180, 20)
-    }
+    // The flower wreath that marks the play area, and where its inner wire sits in the bitmap.
+    private val ringBitmap = BitmapFactory.decodeResource(resources, R.drawable.flower_ring)
+    private val ringCenterX = 592f * ringBitmap.width / 1200f
+    private val ringCenterY = 600f * ringBitmap.width / 1200f
+    private val ringRadius = 443f * ringBitmap.width / 1200f
+    private val ringPaint = Paint(Paint.FILTER_BITMAP_FLAG or Paint.ANTI_ALIAS_FLAG)
+    private val ringDst = RectF()
+    private val tableColor = Color.rgb(89, 153, 152)
     private val shadowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.argb(70, 0, 0, 0) }
-    private val ropeShadowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        style = Paint.Style.STROKE; color = Color.argb(60, 0, 0, 0)
-    }
-    private val knotPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.rgb(255, 235, 59) }
     private val magnetPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val highlightPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.argb(150, 255, 255, 255) }
     private val ghostPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { alpha = 130 }
@@ -127,7 +124,7 @@ class GameView(
             message = "${p.name} is thinking…"
         } else {
             state = State.WAITING_INPUT
-            message = "${p.name}: drag inside the rope and let go"
+            message = "${p.name}: drag inside the ring and let go"
         }
         invalidate()
     }
@@ -164,8 +161,15 @@ class GameView(
         val bottom = height - insetBottom - footerHeight
         cx = width / 2f
         cy = (top + bottom) / 2f
-        val availableRadius = (min(width - dp(24f), bottom - top) / 2f).coerceAtLeast(1f)
-        scale = availableRadius / (MagnetWorld.ARENA_RADIUS * 1.04f)
+        // Fit the whole wreath across the screen; it may run under the score panels vertically.
+        val fitWidth = width * ringRadius / ringBitmap.width
+        val fitHeight = (bottom - top) / 2f / 1.02f
+        scale = min(fitWidth, fitHeight).coerceAtLeast(1f) / MagnetWorld.ARENA_RADIUS
+        val k = scale * MagnetWorld.ARENA_RADIUS / ringRadius
+        ringDst.set(
+            cx - ringCenterX * k, cy - ringCenterY * k,
+            cx + (ringBitmap.width - ringCenterX) * k, cy + (ringBitmap.height - ringCenterY) * k,
+        )
         val r = MagnetWorld.MAGNET_RADIUS * scale
         if (r != magnetShaderRadius && r > 0) {
             magnetShaderRadius = r
@@ -176,14 +180,6 @@ class GameView(
             )
             ghostPaint.shader = magnetPaint.shader
         }
-        tablePaint.shader = RadialGradient(
-            width / 2f, height / 2f, maxOf(width, height).toFloat().coerceAtLeast(1f),
-            Color.rgb(245, 243, 238), Color.rgb(214, 210, 200), Shader.TileMode.CLAMP,
-        )
-        ropePaint.strokeWidth = dp(7f)
-        ropeTwistPaint.strokeWidth = dp(7f)
-        ropeShadowPaint.strokeWidth = dp(7f)
-        ropeTwistPaint.pathEffect = DashPathEffect(floatArrayOf(dp(2f), dp(5f)), 0f)
         warnPaint.strokeWidth = dp(3f)
     }
 
@@ -285,7 +281,7 @@ class GameView(
                     performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
                     startSimulation()
                 } else {
-                    message = "Place the magnet fully inside the rope"
+                    message = "Place the magnet fully inside the ring"
                 }
                 invalidate()
             }
@@ -306,14 +302,14 @@ class GameView(
         if (magnetShaderRadius <= 0f) return
         tick(dt)
 
-        canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), tablePaint)
+        canvas.drawColor(tableColor)
 
         canvas.save()
         if (shake > 0f) {
             val s = dp(6f) * shake
             canvas.translate(sin(stateTime * 90f) * s, sin(stateTime * 70f + 1f) * s * 0.6f)
         }
-        drawRope(canvas)
+        drawRing(canvas)
         val r = MagnetWorld.MAGNET_RADIUS * scale
         for (m in game.world.magnets) drawMagnet(canvas, toScreenX(m.x), toScreenY(m.y), r, m.stuck)
         canvas.restore()
@@ -348,15 +344,8 @@ class GameView(
         }
     }
 
-    private fun drawRope(canvas: Canvas) {
-        val radius = MagnetWorld.ARENA_RADIUS * scale + ropePaint.strokeWidth / 2
-        canvas.drawCircle(cx, cy + dp(2f), radius, ropeShadowPaint)
-        canvas.drawCircle(cx, cy, radius, ropePaint)
-        canvas.drawCircle(cx, cy, radius, ropeTwistPaint)
-        // The knot.
-        val kx = cx - radius * 0.62f
-        val ky = cy - radius * 0.78f
-        canvas.drawCircle(kx, ky, ropePaint.strokeWidth * 0.9f, knotPaint)
+    private fun drawRing(canvas: Canvas) {
+        canvas.drawBitmap(ringBitmap, null, ringDst, ringPaint)
     }
 
     private fun drawMagnet(canvas: Canvas, x: Float, y: Float, r: Float, stuck: Boolean) {
@@ -414,13 +403,13 @@ class GameView(
     }
 
     private fun drawFooter(canvas: Canvas) {
-        textPaint.color = Color.rgb(55, 55, 55)
+        textPaint.color = Color.WHITE
         textPaint.typeface = Typeface.DEFAULT
         textPaint.textSize = dp(16f)
         val y = height - insetBottom - dp(18f)
         canvas.drawText(fit(message, width - dp(24f)), width / 2f, y, textPaint)
         if (notice.isNotEmpty()) {
-            textPaint.color = Color.rgb(198, 40, 40)
+            textPaint.color = Color.rgb(255, 224, 130)
             textPaint.typeface = Typeface.DEFAULT_BOLD
             canvas.drawText(fit(notice, width - dp(24f)), width / 2f, y - dp(26f), textPaint)
         }
