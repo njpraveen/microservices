@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Magnet Clash</string>
+    <string name="tagline">Don\'t let them clack!</string>
+    <string name="how_to_play">How to play</string>
+    <string name="rules">The 24 magnets are divided evenly among the players.\n\nTake turns placing one magnet inside the yellow rope. Touch and drag to aim, then let go to drop it.\n\nMagnets that are too close pull each other in. If two or more magnets snap together on your turn, you must take all of the snapped magnets back.\n\nThe first player to place all of their magnets wins.</string>
+</resources>
